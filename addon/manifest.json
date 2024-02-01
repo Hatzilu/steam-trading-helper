@@ -6,8 +6,8 @@
     "description": "Bulk add items in a trade window",
     "content_scripts": [
       {
-        "matches": ["*://*.mozilla.org/*"],
-        "js": ["borderify.js"]
+        "matches": ["https://steamcommunity.com/tradeoffer/*"],
+        "js": ["index.js"]
       }
     ]
   }
