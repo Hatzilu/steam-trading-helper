@@ -1,0 +1,19 @@
+body {
+    width: 200px;
+    padding: 10px;
+  }
+  
+  #inputContainer {
+    margin-top: 10px;
+  }
+  
+  #autocompleteOptions {
+    margin-top: 5px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    position: absolute;
+    z-index: 1;
+    max-height: 100px;
+    overflow-y: auto;
+  }
