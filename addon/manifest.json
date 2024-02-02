@@ -4,6 +4,9 @@
     "version": "1.0",
   
     "description": "Bulk add items in a trade window",
+    "background": {
+      "page": "background.html"
+    },
     "content_scripts": [
       {
         "matches": ["https://steamcommunity.com/tradeoffer/*"],
