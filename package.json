@@ -1,6 +1,6 @@
 {
     "scripts": {
-        "build": "webpack",
+        "build": "npm run wasm:pack && webpack && cp ./addon/manifest.json ./dist/manifest.json",
         "serve": "webpack serve",
         "wasm:pack": "cd rust && wasm-pack build --target web && npm run wasm:move",
         "wasm:move": "move ./rust/pkg ./addon/pkg"
