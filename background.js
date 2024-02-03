@@ -39,8 +39,6 @@ let filter;
 
 let inventoryResponse;
 
-console.log(inventoryResponse);
-
 const timer = setInterval(() =>{
     if (inventoryResponse && inventoryResponse?.success) {
          console.log(inventoryResponse)
@@ -48,11 +46,14 @@ const timer = setInterval(() =>{
      }
     
     }, 2000)
-    
+
+
 function logURL(details) {
-    if (!details.url.endsWith('/inventory/json/440/2/?trading=1')) return;
+    console.log({details})
+    if (!details.url.includes('/inventory/json/')) return;
     document.body.style.border = "5px solid red";
-    console.log({details: details.requestId})
+    requestId = details.requestId;
+    console.log({requestId});
     filter = browser.webRequest.filterResponseData(details.requestId)
     console.log({filter})
     let chunks = [];
@@ -62,13 +63,16 @@ function logURL(details) {
     filter.ondata = (event) => { 
         if (!event.data) return;
         chunks.push(event.data);
+        filter.write(event.data);
       };
     filter.onstop = (event) => {
+        filter.close();
         console.log('stopped', {event});   
         const buffer = concatenateArrayBuffers(chunks);
         const string = arrayBufferToString(buffer);
         try {
             inventoryResponse = JSON.parse(string)
+            browser.webRequest.onBeforeRequest.removeListener(logURL);
         }
         catch (error) {
             console.error('failed to turn inventory response to string', {error, string: buffer, chunks})
@@ -98,24 +102,9 @@ async function getItems(userId, appId, contextId) {
 }
 
 
-browser.webRequest.onBeforeRequest.addListener(logURL, {
-    urls: ["*://steamcommunity.com/*"],
-  },["blocking"]);
-
-function initBackground() {
-    const itemElements = document.querySelectorAll('.inventory_item_link');
-
-    // console.log({browser, window});
-    // console.log({w: browser.extension});
-    // console.log({webRequest: browser.webRequest});
-    // console.log({you: window.UserYou});
-
-    // getUserDataFromHTML();
-
-
-}
-
-
-// setTimeout(initBackground, 3000);
+browser.webRequest.onBeforeSendHeaders.addListener(logURL, {
+    urls: ["https://steamcommunity.com/*"],
+    types: ["xmlhttprequest"]
+  }, ["blocking"]);
 
 

@@ -17,7 +17,7 @@
 
   "content_scripts": [
     {
-      "matches": ["*://steamcommunity.com/tradeoffer/new*"],
+      "matches": ["https://steamcommunity.com/tradeoffer/new*"],
       "js": ["index.js"]
     }
   ],
@@ -25,7 +25,7 @@
     "activeTab",
     "webRequest",    
     "webRequestBlocking",
-    "webRequestFilterResponse.serviceWorkerScript","webRequestFilterResponse",
+    "webRequestFilterResponse",
     "<all_urls>"
   ]
 }
