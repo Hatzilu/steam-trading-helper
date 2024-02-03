@@ -1,31 +1,24 @@
 {
+	"manifest_version": 2,
+	"name": "steam-trading-helper",
+	"version": "1.0",
 
-  "manifest_version": 2,
-  "name": "steam-trading-helper",
-  "version": "1.0",
+	"description": "interact quicker in trade offer windows",
 
-  "description": "interact quicker in trade offer windows",
+	"icons": {
+		"48": "icons/border-48.png"
+	},
 
-  "icons": {
-    "48": "icons/border-48.png"
-  },
+	"background": {
+		"page": "background.html",
+		"persistent": false
+	},
 
-  "background": {
-    "page": "background.html",
-    "persistent": false
-  },
-
-  "content_scripts": [
-    {
-      "matches": ["https://steamcommunity.com/tradeoffer/new*"],
-      "js": ["index.js"]
-    }
-  ],
-  "permissions": [
-    "activeTab",
-    "webRequest",    
-    "webRequestBlocking",
-    "webRequestFilterResponse",
-    "<all_urls>"
-  ]
+	"content_scripts": [
+		{
+			"matches": ["https://steamcommunity.com/tradeoffer/new*"],
+			"js": ["index.js"]
+		}
+	],
+	"permissions": ["activeTab", "webRequest", "webRequestBlocking", "webRequestFilterResponse", "<all_urls>"]
 }
