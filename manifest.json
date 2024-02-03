@@ -10,11 +10,22 @@
     "48": "icons/border-48.png"
   },
 
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+
   "content_scripts": [
     {
       "matches": ["*://steamcommunity.com/tradeoffer/new*"],
       "js": ["index.js"]
     }
+  ],
+  "permissions": [
+    "activeTab",
+    "webRequest",    
+    "webRequestBlocking",
+    "webRequestFilterResponse.serviceWorkerScript","webRequestFilterResponse",
+    "<all_urls>"
   ]
-
 }
