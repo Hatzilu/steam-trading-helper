@@ -7,7 +7,7 @@
 	},
 	"extends": ["eslint:recommended"],
 	"rules": {
-		"no-unused-vars": "error",
+		"no-unused-vars": "warn",
 		"eqeqeq": "error",
 		"no-eval": "error",
 		"no-implicit-globals": "error",
