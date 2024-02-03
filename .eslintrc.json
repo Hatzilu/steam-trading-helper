@@ -1,0 +1,23 @@
+{
+	"root": true,
+	"env": { "node": true, "browser": true, "webextensions": true, "es6": true },
+	"parserOptions": {
+		"ecmaVersion": "latest",
+		"sourceType": "module"
+	},
+	"extends": ["eslint:recommended"],
+	"rules": {
+		"no-unused-vars": "error",
+		"eqeqeq": "error",
+		"no-eval": "error",
+		"no-implicit-globals": "error",
+		"no-useless-call": "error",
+		"no-duplicate-imports": "error",
+		"no-promise-executor-return": "error",
+		"no-self-compare": "error",
+		"no-template-curly-in-string": "error",
+		"no-unreachable-loop": "error",
+		"no-multiple-empty-lines": "error",
+		"no-trailing-spaces": "error"
+	}
+}

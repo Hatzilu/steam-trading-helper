@@ -1,0 +1,4 @@
+.eslintrc.cjs
+.eslintrc.json
+dist
+node_modules
