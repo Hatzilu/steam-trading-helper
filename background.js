@@ -17,7 +17,6 @@ browser.webRequest.onBeforeSendHeaders.addListener(
 		filter.onerror = (err) => console.error(err);
 
 		filter.ondata = (event) => {
-			console.log(`ondata`, event.data);
 			if (!event.data) return;
 			chunks.push(event.data);
 			filter.write(event.data);
