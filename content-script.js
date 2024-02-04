@@ -12,7 +12,7 @@ const isAdded = (element) => element.hasAttribute('data-is-added');
 function generateItemElementMap(response) {
 	const { userProfileId, rgInventory, rgDescriptions } = response;
 	const inventoryItems = Object.values(rgInventory);
-	const decriptions = new Map(Object.entries(rgDescriptions));
+	const descriptions = new Map(Object.entries(rgDescriptions));
 	/**
 	 * maps how many a tag instances of a given item are in the inventory
 	 * @type {Map<string, HTMLLinkElement[]>}
@@ -21,12 +21,12 @@ function generateItemElementMap(response) {
 	inventoryItems.forEach((item) => {
 		const id = `${item.classid}_${item.instanceid}`;
 
-		if (!decriptions.has(id)) {
+		if (!descriptions.has(id)) {
 			console.log('no item for id', id);
 			return;
 		}
 
-		const detailedItem = decriptions.get(id);
+		const detailedItem = descriptions.get(id);
 
 		if (detailedItem.tradable === 0) {
 			console.log(`untradable item`, detailedItem.market_name);
