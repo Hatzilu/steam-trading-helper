@@ -1,3 +1,45 @@
+/**
+ *
+ * @param {Steam.InventoryResponse} response
+ * @returns {Map<string, HTMLAnchorElement[]>}
+ */
+function generateItemElementMap(response) {
+	const { userProfileId, rgInventory, rgDescriptions } = response;
+	const inventoryItems = Object.values(rgInventory);
+	const decriptions = new Map(Object.entries(rgDescriptions));
+	/**
+	 * maps how many a tag instances of a given item are in the inventory
+	 * @type {Map<string, HTMLLinkElement[]>}
+	 */
+	const map = new Map();
+	inventoryItems.forEach((item) => {
+		const id = `${item.classid}_${item.instanceid}`;
+
+		if (!decriptions.has(id)) {
+			console.log('no item for id', id);
+			return;
+		}
+
+		const detailedItem = decriptions.get(id);
+
+		if (detailedItem.tradable === 0) {
+			console.log(`untradable item`, detailedItem.market_name);
+			return;
+		}
+		const elem = document.querySelector(
+			`a[href^='https://steamcommunity.com/id/${userProfileId}/inventory/#440_2_${item.id}']`,
+		);
+		if (map.has(detailedItem.market_name)) {
+			const elems = map.get(detailedItem.market_name);
+			map.set(detailedItem.market_name, [...elems, elem]);
+			return;
+		}
+
+		map.set(detailedItem.market_name, [elem]);
+	});
+	return map;
+}
+
 browser.runtime.onMessage.addListener((request, sender) => {
 	console.log('registered onMessage', { request, sender });
 
@@ -7,33 +49,10 @@ browser.runtime.onMessage.addListener((request, sender) => {
 		 * @type {Steam.InventoryResponse}
 		 */
 		const response = request.data;
-		console.log({ response });
-		const entries = Object.entries(response.rgInventory);
-		const decriptions = new Map(Object.entries(response.rgDescriptions));
-		const itemToCountMap = new Map();
-		console.log({ entries, decriptions });
-		let items = [];
-		decriptions.forEach((curr, i) => {
-			// const [key, item] = curr;
-			// const id = `${item.classid}_${item.instanceid}`;
-			if (curr.tradable === 0) {
-				return;
-			}
-			if (itemToCountMap.has(curr.market_name)) {
-				const n = itemToCountMap.get(curr.market_name);
-				itemToCountMap.set(curr.market_name, n + 1);
-				return;
-			}
 
-			itemToCountMap.set(curr.market_name, 1);
-			// if (counterMap.has())
-			items.push(curr);
-
-			// item.instanceid;
-			// console.log({ acc, curr });
-			// return curr;
-		}, {});
-		console.log({ items, itemToCountMap });
+		const map = generateItemElementMap(response);
+		console.log(map);
+		console.log({ itemToIDsMap });
 		console.log('Received shared data:', response);
 	}
 });
