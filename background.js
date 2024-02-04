@@ -6,6 +6,12 @@ browser.webRequest.onBeforeSendHeaders.addListener(
 		if (!details.url.includes('/inventory/json/')) {
 			return;
 		}
+		const test = new RegExp(
+			'(?:https?://)?steamcommunity.com/(?:profiles|id)/(?<profileId>[a-zA-Z0-9]+)',
+			'g',
+		);
+		const resukt = test.exec(details.url);
+		const userProfileId = resukt.groups?.['profileId'];
 
 		const filter = browser.webRequest.filterResponseData(details.requestId);
 		let chunks = [];
@@ -29,6 +35,7 @@ browser.webRequest.onBeforeSendHeaders.addListener(
 			const string = arrayBufferToString(buffer);
 			try {
 				let inventoryResponse = JSON.parse(string);
+				inventoryResponse.userProfileId = userProfileId;
 
 				browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 					const activeTab = tabs[0];
