@@ -40,6 +40,28 @@ function generateItemElementMap(response) {
 	return map;
 }
 
+/**
+ *
+ * @param {MouseEvent<HTMLButtonElement>} e
+ * @param {HTMLSelectElement} select
+ * @param {Map<string,HTMLAnchorElement[]>} map
+ */
+function onSubmitItemsToTrade(e, select, map) {
+	const selected = select.value;
+	if (!selected) {
+		throw new Error('invalid option selected');
+	}
+	if (!map.has(selected)) {
+		throw new Error('selection out of bounds');
+	}
+	const elements = map.get(selected);
+	elements.forEach((element) => {
+		element.dispatchEvent(new Event('dblclick', { bubbles: true }));
+	});
+	select.options.remove(select.options.selectedIndex);
+	console.log({ e, select, map, opt: select.options });
+}
+
 browser.runtime.onMessage.addListener((request, sender) => {
 	console.log('registered onMessage', { request, sender });
 
@@ -52,7 +74,29 @@ browser.runtime.onMessage.addListener((request, sender) => {
 
 		const map = generateItemElementMap(response);
 		console.log(map);
-		console.log({ itemToIDsMap });
+
+		// Generate HTML elements for the user
+		const select = document.createElement('select');
+		select.id = 'item-names-select';
+		select.style.background = 'darkgreen';
+		select.style.color = 'white';
+		select.style.position = 'absolute';
+		select.style.top = '1%';
+
+		[...map.keys()].forEach((itemName) => {
+			const opt = document.createElement('option');
+			opt.text = `${itemName} (x${map.get(itemName).length})`;
+			opt.value = itemName;
+			select.appendChild(opt);
+		});
+		document.body.appendChild(select);
+		const button = document.createElement('button');
+		button.style.position = 'absolute';
+		button.style.top = '5%';
+		button.style.minWidth = '50px';
+		button.style.minHeight = '20px';
+		button.onclick = (e) => onSubmitItemsToTrade(e, select, map);
+		document.body.appendChild(button);
 		console.log('Received shared data:', response);
 	}
 });
