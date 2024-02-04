@@ -42,11 +42,21 @@ function generateItemElementMap(response) {
 
 /**
  *
+ * @param {SubmitEvent<HTMLFormElement>} e
+ * @param {Map<string,HTMLAnchorElement[]>} map
+ */
+function onSubmitItemsToTrade(e, map) {
+	const [select, input, button] = e.target;
+	e.preventDefault();
+	console.log({ e });
+}
+/**
+ *
  * @param {MouseEvent<HTMLButtonElement>} e
  * @param {HTMLSelectElement} select
  * @param {Map<string,HTMLAnchorElement[]>} map
  */
-function onSubmitItemsToTrade(e, select, map) {
+function onSelectItemsToTrade(e, select, map) {
 	const selected = select.value;
 	if (!selected) {
 		throw new Error('invalid option selected');
@@ -76,27 +86,50 @@ browser.runtime.onMessage.addListener((request, sender) => {
 		console.log(map);
 
 		// Generate HTML elements for the user
+		// form
+		const form = document.createElement('form');
+		form.style.position = 'absolute';
+		form.style.top = '1%';
+		form.style.display = 'flex';
+		form.style.gap = '5px';
+		form.name = 'submit-items-to-trade';
+
+		// select
 		const select = document.createElement('select');
 		select.id = 'item-names-select';
 		select.style.background = 'darkgreen';
 		select.style.color = 'white';
-		select.style.position = 'absolute';
-		select.style.top = '1%';
+		select.name = 'items';
 
-		[...map.keys()].forEach((itemName) => {
+		const itemNames = [...map.keys()];
+		// options
+		itemNames.forEach((itemName) => {
 			const opt = document.createElement('option');
 			opt.text = `${itemName} (x${map.get(itemName).length})`;
 			opt.value = itemName;
 			select.appendChild(opt);
 		});
-		document.body.appendChild(select);
+		form.appendChild(select);
+
+		// number of items input
+		const numberofItemsInput = document.createElement('input');
+		numberofItemsInput.type = 'number';
+		numberofItemsInput.placeholder = itemNames.length;
+		numberofItemsInput.name = 'item-quantity';
+
+		form.appendChild(numberofItemsInput);
+
+		// submit button
 		const button = document.createElement('button');
-		button.style.position = 'absolute';
-		button.style.top = '5%';
-		button.style.minWidth = '50px';
-		button.style.minHeight = '20px';
-		button.onclick = (e) => onSubmitItemsToTrade(e, select, map);
-		document.body.appendChild(button);
+		button.style.minWidth = '75px';
+		button.style.minHeight = '45px';
+		button.type = 'submit';
+		button.textContent = 'Add items';
+
+		form.onsubmit = (e) => onSubmitItemsToTrade(e);
+		document.body.appendChild(form);
+
+		form.appendChild(button);
 		console.log('Received shared data:', response);
 	}
 });
