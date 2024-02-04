@@ -46,30 +46,73 @@ function generateItemElementMap(response) {
  * @param {Map<string,HTMLAnchorElement[]>} map
  */
 function onSubmitItemsToTrade(e, map) {
-	const [select, input, button] = e.target;
+	const [select, numberInput, button] = e.target;
 	e.preventDefault();
-	console.log({ e });
+	const itemName = select.value;
+
+	if (!map.has(itemName)) {
+		throw new Error('Invalid item selected');
+	}
+	const elements = map.get(itemName);
+
+	const amount = numberInput.value === '' ? elements.length : Number(numberInput.value);
+
+	e.target.action = '';
+	let length = elements.length;
+
+	// elements.length should be <= amount due to html form validation
+	for (let i = 0; i < amount; i++) {
+		const element = elements.shift();
+		element.dispatchEvent(new Event('dblclick', { bubbles: true }));
+	}
+	// after modifying elements, set the key to the new array
+	map.set(itemName, elements);
+
+	/**
+	 * @type {HTMLOptionElement[]}
+	 */
+	const opts = [...select.options];
+	const selectedOption = opts.find((option) => option.value === itemName);
+	if (length !== elements.length) {
+		// update form validations and stuff
+		numberInput.max = elements.length;
+
+		selectedOption.text = `${itemName} (x${elements.length})`;
+	}
+	if (elements.length === 0) {
+		// if no elements, remove this element/disable it because all the items are in trade box
+
+		selectedOption.disabled = 'true';
+
+		// While we're at it, auto-select the next option for better UX
+		const nextOption = opts[opts.indexOf(selectedOption) + 1];
+		if (map.has(nextOption.value)) {
+			const nextOptionAmount = map.get(nextOption.value).length;
+			numberInput.value = '';
+			numberInput.max = nextOptionAmount;
+		}
+		select.value = nextOption.value;
+	}
 }
 /**
  *
- * @param {MouseEvent<HTMLButtonElement>} e
- * @param {HTMLSelectElement} select
+ * @param {Event<HTMLSelectElement>} e
  * @param {Map<string,HTMLAnchorElement[]>} map
+ * @param {HTMLInputElement} numberofItemsInput
  */
-function onSelectItemsToTrade(e, select, map) {
+function onSelectItemsToTrade(e, map, numberofItemsInput) {
+	const select = e.target;
 	const selected = select.value;
+	console.log({ e, select, selected });
 	if (!selected) {
 		throw new Error('invalid option selected');
 	}
 	if (!map.has(selected)) {
 		throw new Error('selection out of bounds');
 	}
-	const elements = map.get(selected);
-	elements.forEach((element) => {
-		element.dispatchEvent(new Event('dblclick', { bubbles: true }));
-	});
-	select.options.remove(select.options.selectedIndex);
-	console.log({ e, select, map, opt: select.options });
+	const max = map.get(selected).length;
+	numberofItemsInput.max = max;
+	numberofItemsInput.placeholder = `${max} or leave empty for all of them`;
 }
 
 browser.runtime.onMessage.addListener((request, sender) => {
@@ -92,14 +135,15 @@ browser.runtime.onMessage.addListener((request, sender) => {
 		form.style.top = '1%';
 		form.style.display = 'flex';
 		form.style.gap = '5px';
+		form.action = '';
 		form.name = 'submit-items-to-trade';
 
 		// select
 		const select = document.createElement('select');
-		select.id = 'item-names-select';
 		select.style.background = 'darkgreen';
 		select.style.color = 'white';
 		select.name = 'items';
+		select.style.minHeight = '45px';
 
 		const itemNames = [...map.keys()];
 		// options
@@ -114,8 +158,10 @@ browser.runtime.onMessage.addListener((request, sender) => {
 		// number of items input
 		const numberofItemsInput = document.createElement('input');
 		numberofItemsInput.type = 'number';
-		numberofItemsInput.placeholder = itemNames.length;
+		numberofItemsInput.style.minHeight = '45px';
+		numberofItemsInput.placeholder = `${map.get(select.value).length} or leave empty for all of them`;
 		numberofItemsInput.name = 'item-quantity';
+		numberofItemsInput.max = map.get(select.value).length;
 
 		form.appendChild(numberofItemsInput);
 
@@ -126,7 +172,8 @@ browser.runtime.onMessage.addListener((request, sender) => {
 		button.type = 'submit';
 		button.textContent = 'Add items';
 
-		form.onsubmit = (e) => onSubmitItemsToTrade(e);
+		form.onsubmit = (e) => onSubmitItemsToTrade(e, map);
+		select.onchange = (e) => onSelectItemsToTrade(e, map, numberofItemsInput);
 		document.body.appendChild(form);
 
 		form.appendChild(button);
