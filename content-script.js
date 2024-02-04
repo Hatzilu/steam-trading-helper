@@ -1,5 +1,11 @@
 /**
  *
+ * @param {HTMLAnchorElement} element
+ */
+const isAdded = (element) => element.hasAttribute('data-is-added');
+
+/**
+ *
  * @param {Steam.InventoryResponse} response
  * @returns {Map<string, HTMLAnchorElement[]>}
  */
@@ -46,33 +52,61 @@ function generateItemElementMap(response) {
  * @param {Map<string,HTMLAnchorElement[]>} map
  */
 function onSubmitItemsToTrade(e, map) {
-	const [select, numberInput, button] = e.target;
 	e.preventDefault();
+	const [select, numberInput] = e.target;
+	const button = e.submitter;
 	const itemName = select.value;
+
+	console.log(button.);
 
 	if (!map.has(itemName)) {
 		throw new Error('Invalid item selected');
 	}
-	const elements = map.get(itemName);
-
-	const amount = numberInput.value === '' ? elements.length : Number(numberInput.value);
-
-	e.target.action = '';
-	let length = elements.length;
-
-	// elements.length should be <= amount due to html form validation
-	for (let i = 0; i < amount; i++) {
-		const element = elements.shift();
-		element.dispatchEvent(new Event('dblclick', { bubbles: true }));
-	}
-	// after modifying elements, set the key to the new array
-	map.set(itemName, elements);
+	const mapElements = map.get(itemName);
 
 	/**
 	 * @type {HTMLOptionElement[]}
 	 */
 	const opts = [...select.options];
 	const selectedOption = opts.find((option) => option.value === itemName);
+
+	const elements =
+		button.value === 'remove'
+			? mapElements.filter(isAdded)
+			: mapElements.filter((a) => isAdded(a) === false);
+
+	let amount = numberInput.value === '' ? elements.length : Number(numberInput.value);
+
+	e.target.action = '';
+	let length = elements.length;
+
+	// filteredElements.length should be <= amount due to html form validation
+	for (let i = 0; i < amount; i++) {
+		const element = elements[i];
+		switch (button.value) {
+			case 'add': {
+				if (isAdded(element) === false) {
+					element.setAttribute('data-is-added', true);
+				}
+				break;
+			}
+			case 'remove': {
+				if (isAdded(element)) {
+					element.removeAttribute('data-is-added');
+				}
+				break;
+			}
+			default:
+				throw new Error(`Unhandled button type ${button.type}`);
+		}
+
+		const event = new Event('dblclick', { bubbles: true });
+		element.dispatchEvent(event);
+		// console.log(element.attributes);
+	}
+	// after modifying filteredElements, set the key to the new array
+	map.set(itemName, elements);
+
 	if (length !== elements.length) {
 		// update form validations and stuff
 		numberInput.max = elements.length;
@@ -80,7 +114,7 @@ function onSubmitItemsToTrade(e, map) {
 		selectedOption.text = `${itemName} (x${elements.length})`;
 	}
 	if (elements.length === 0) {
-		// if no elements, remove this element/disable it because all the items are in trade box
+		// if no filteredElements, remove this element/disable it because all the items are in trade box
 
 		selectedOption.disabled = 'true';
 
@@ -103,7 +137,7 @@ function onSubmitItemsToTrade(e, map) {
 function onSelectItemsToTrade(e, map, numberofItemsInput) {
 	const select = e.target;
 	const selected = select.value;
-	console.log({ e, select, selected });
+
 	if (!selected) {
 		throw new Error('invalid option selected');
 	}
@@ -126,7 +160,6 @@ browser.runtime.onMessage.addListener((request, sender) => {
 		const response = request.data;
 
 		const map = generateItemElementMap(response);
-		console.log(map);
 
 		// Generate HTML elements for the user
 		// form
@@ -135,7 +168,7 @@ browser.runtime.onMessage.addListener((request, sender) => {
 		form.style.top = '1%';
 		form.style.display = 'flex';
 		form.style.gap = '5px';
-		form.action = '';
+		form.action = 'add';
 		form.name = 'submit-items-to-trade';
 
 		// select
@@ -166,23 +199,32 @@ browser.runtime.onMessage.addListener((request, sender) => {
 		form.appendChild(numberofItemsInput);
 
 		// submit button
-		const button = document.createElement('button');
-		button.style.minWidth = '75px';
-		button.style.minHeight = '45px';
-		button.type = 'submit';
-		button.textContent = 'Add items';
+		const addButton = document.createElement('button');
+		addButton.style.minWidth = '75px';
+		addButton.style.minHeight = '45px';
+		addButton.type = 'submit';
+		addButton.value = 'add';
+		addButton.textContent = 'Add items';
+
+		const removeButton = document.createElement('button');
+		removeButton.style.minWidth = '75px';
+		removeButton.style.minHeight = '45px';
+		removeButton.type = 'submit';
+		removeButton.value = 'remove';
+		removeButton.textContent = 'Remove items';
 
 		form.onsubmit = (e) => onSubmitItemsToTrade(e, map);
 		select.onchange = (e) => onSelectItemsToTrade(e, map, numberofItemsInput);
 		document.body.appendChild(form);
 
-		form.appendChild(button);
-		console.log('Received shared data:', response);
+		form.appendChild(addButton);
+		form.appendChild(removeButton);
+		console.log('Received shared data');
 	}
 });
 
-function init() {
-	console.log('init index.js');
-}
+// function init() {
+// 	console.log('init index.js');
+// }
 
-init();
+// init();
