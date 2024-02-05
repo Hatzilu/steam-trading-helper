@@ -221,12 +221,18 @@ browser.runtime.onMessage.addListener((request, sender) => {
 
 		const itemNames = [...map.keys()];
 		// options
-		itemNames.forEach((itemName) => {
-			const opt = document.createElement('option');
-			opt.text = `${itemName} (x${map.get(itemName).length})`;
-			opt.value = itemName;
-			select.appendChild(opt);
-		});
+		itemNames
+			.sort((a, b) => {
+				const arrayA = map.get(a);
+				const arrayB = map.get(b);
+				return arrayB.length - arrayA.length;
+			})
+			.forEach((itemName) => {
+				const opt = document.createElement('option');
+				opt.text = `${itemName} (x${map.get(itemName).length})`;
+				opt.value = itemName;
+				select.appendChild(opt);
+			});
 		form.appendChild(select);
 
 		// number of items input
