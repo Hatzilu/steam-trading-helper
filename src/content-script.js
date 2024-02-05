@@ -6,6 +6,25 @@ const isAdded = (element) => element.hasAttribute('data-is-added');
 
 /**
  *
+ * @param {HTMLAnchorElement[]} elements
+ * @param {string} value
+ * @returns {number}
+ */
+function calculateAmount(elements, value) {
+	if (value === '') {
+		return elements.length;
+	}
+	if (elements.length === 0) {
+		return 0;
+	}
+	const num = Number(value);
+	if (num > elements.length) {
+		return elements.length;
+	}
+	return num;
+}
+/**
+ *
  * @param {Steam.InventoryResponse} response
  * @returns {Map<string, HTMLAnchorElement[]>}
  */
@@ -57,7 +76,7 @@ function onSubmitItemsToTrade(e, map) {
 	const button = e.submitter;
 	const itemName = select.value;
 
-	console.log(button.);
+	console.log(button.value);
 
 	if (!map.has(itemName)) {
 		throw new Error('Invalid item selected');
@@ -75,96 +94,42 @@ function onSubmitItemsToTrade(e, map) {
 			? mapElements.filter(isAdded)
 			: mapElements.filter((a) => isAdded(a) === false);
 
-	let amount = numberInput.value === '' ? elements.length : Number(numberInput.value);
+	const amount = calculateAmount(elements, numberInput.value);
 
 	e.target.action = '';
-	let length = elements.length;
+	switch (button.value) {
+		case 'add': {
+			for (let i = 0; i < amount; i++) {
+				const element = elements[i];
+				if (isAdded(element)) continue;
+
+				element.setAttribute('data-is-added', true);
+				const event = new Event('dblclick', { bubbles: true });
+				element.dispatchEvent(event);
+			}
+			break;
+		}
+		case 'remove': {
+			for (let i = 0; i < amount; i++) {
+				const element = elements[i];
+				if (isAdded(element) === false) continue;
+
+				element.removeAttribute('data-is-added');
+				const event = new Event('dblclick', { bubbles: true });
+				element.dispatchEvent(event);
+			}
+			break;
+		}
+		default:
+			throw new Error(`Unhandled button type ${button.type}`);
+	}
 
 	// filteredElements.length should be <= amount due to html form validation
-	for (let i = 0; i < amount; i++) {
-		const element = elements[i];import { arrayBufferToString, concatenateArrayBuffers } from './lib/buffer.js';
 
-		browser.webRequest.onBeforeSendHeaders.addListener(
-			(details) => {
-				console.log('init');
-				if (!details.url.includes('/inventory/json/')) {
-					return;
-				}
-				const test = new RegExp(
-					'(?:https?://)?steamcommunity.com/(?:profiles|id)/(?<profileId>[a-zA-Z0-9]+)',
-					'g',
-				);
-				const resukt = test.exec(details.url);
-				const userProfileId = resukt.groups?.['profileId'];
-		
-				const filter = browser.webRequest.filterResponseData(details.requestId);
-				let chunks = [];
-		
-				filter.onstart = (event) => {
-					console.log('started', { event });
-				};
-		
-				filter.onerror = (err) => console.error(err);
-		
-				filter.ondata = (event) => {
-					if (!event.data) return;
-					chunks.push(event.data);
-					filter.write(event.data);
-				};
-		
-				filter.onstop = (event) => {
-					console.log('stopped', { event });
-					filter.close();
-					const buffer = concatenateArrayBuffers(chunks);
-					const string = arrayBufferToString(buffer);
-					try {
-						let inventoryResponse = JSON.parse(string);
-						inventoryResponse.userProfileId = userProfileId;
-		
-						browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-							const activeTab = tabs[0];
-							if (activeTab) {
-								browser.tabs.sendMessage(activeTab.id, {
-									action: 'requestData',
-									data: inventoryResponse,
-								});
-							}
-						});
-					} catch (error) {
-						console.error(error);
-					}
-				};
-			},
-			{
-		
-				urls: ['https://steamcommunity.com/*'],
-				types: ['xmlhttprequest'],
-			},
-			['blocking'],
-		);
-		
-			case 'add': {
-				if (isAdded(element) === false) {
-					element.setAttribute('data-is-added', true);
-				}
-				break;
-			}
-			case 'remove': {
-				if (isAdded(element)) {
-					element.removeAttribute('data-is-added');
-				}
-				break;
-			}
-			default:
-				throw new Error(`Unhandled button type ${button.type}`);
-		}
+	// console.log(element.attributes);
 
-		const event = new Event('dblclick', { bubbles: true });
-		element.dispatchEvent(event);
-		// console.log(element.attributes);
-	}
 	// after modifying filteredElements, set the key to the new array
-	map.set(itemName, elements);
+	// map.set(itemName, elements);
 
 	if (length !== elements.length) {
 		// update form validations and stuff
@@ -172,20 +137,20 @@ function onSubmitItemsToTrade(e, map) {
 
 		selectedOption.text = `${itemName} (x${elements.length})`;
 	}
-	if (elements.length === 0) {
-		// if no filteredElements, remove this element/disable it because all the items are in trade box
+	// if (elements.length === 0) {
+	// if no filteredElements, remove this element/disable it because all the items are in trade box
 
-		selectedOption.disabled = 'true';
+	// selectedOption.disabled = 'true';
 
-		// While we're at it, auto-select the next option for better UX
-		const nextOption = opts[opts.indexOf(selectedOption) + 1];
-		if (map.has(nextOption.value)) {
-			const nextOptionAmount = map.get(nextOption.value).length;
-			numberInput.value = '';
-			numberInput.max = nextOptionAmount;
-		}
-		select.value = nextOption.value;
-	}
+	// While we're at it, auto-select the next option for better UX
+	// const nextOption = opts[opts.indexOf(selectedOption) + 1];
+	// if (map.has(nextOption.value)) {
+	// 	const nextOptionAmount = map.get(nextOption.value).length;
+	// 	numberInput.value = '';
+	// 	numberInput.max = nextOptionAmount;
+	// }
+	// select.value = nextOption.value;
+	// }
 }
 /**
  *
