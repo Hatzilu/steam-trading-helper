@@ -4,8 +4,17 @@ declare module Steam {
 		rgInventory: { [key: string]: RgInventory };
 		rgCurrency: any[];
 		rgDescriptions: { [key: string]: RgDescription };
+		rgAppInfo: RgAppInfo;
 		more: boolean;
 		more_start: boolean;
+		userProfileId: string;
+	}
+
+	export interface RgAppInfo {
+		appid: number;
+		name: string;
+		icon: string;
+		link: string;
 	}
 
 	export interface RgInventory {
