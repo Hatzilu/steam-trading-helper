@@ -6,6 +6,7 @@
 	"main": "index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
+		"build": "rollup -c",
 		"prettier:check": "prettier --check **/*.{ts,js,cjs,json,yaml}",
 		"prettier:format": "prettier --check **/*.{ts,js,cjs,json,yaml} --write",
 		"lint": "eslint -c ./.eslintrc.json --ignore-pattern \"apps\" --ignore-pattern \"packages\" \"**/*.{ts,js,cjs}\" --resolve-plugins-relative-to .",
@@ -15,8 +16,11 @@
 	"author": "",
 	"license": "ISC",
 	"devDependencies": {
+		"@rollup/plugin-terser": "^0.4.4",
 		"@types/firefox-webext-browser": "^120.0.0",
 		"eslint": "^8.56.0",
-		"prettier": "^3.2.4"
+		"prettier": "^3.2.4",
+		"rollup": "^4.9.6",
+		"rollup-plugin-copy": "^3.5.0"
 	}
 }

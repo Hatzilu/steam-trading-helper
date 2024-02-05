@@ -1,4 +1,4 @@
 /steam
 /node_modules
-
+dist
 *.code-workspace
