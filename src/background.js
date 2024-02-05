@@ -10,8 +10,8 @@ browser.webRequest.onBeforeSendHeaders.addListener(
 			'(?:https?://)?steamcommunity.com/(?:profiles|id)/(?<profileId>[a-zA-Z0-9]+)',
 			'g',
 		);
-		const resukt = test.exec(details.url);
-		const userProfileId = resukt.groups?.['profileId'];
+		const result = test.exec(details.url);
+		const userProfileId = result.groups?.['profileId'];
 
 		const filter = browser.webRequest.filterResponseData(details.requestId);
 		let chunks = [];
