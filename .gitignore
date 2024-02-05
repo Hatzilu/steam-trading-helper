@@ -1,4 +1,9 @@
-/steam
 /node_modules
-dist
+
+# files for testing
+/steam
 *.code-workspace
+
+# rollup output
+/dist
+
