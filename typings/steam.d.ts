@@ -39,7 +39,7 @@ declare module Steam {
 		actions: Action[];
 		market_actions?: Action[];
 		tags: Tag[];
-		app_data: The100_0_AppData;
+		app_data: unknown;
 	}
 
 	export interface Action {
