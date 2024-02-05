@@ -72,11 +72,23 @@ function generateItemElementMap(response) {
  */
 function onSubmitItemsToTrade(e, map) {
 	e.preventDefault();
-	const [select, numberInput] = e.target;
 	const button = e.submitter;
-	const itemName = select.value;
+	const action = button.value;
 
-	console.log(button.value);
+	// Exit early if clearing, since we don't need any other variables for this action.
+	if (action === 'clear') {
+		const elements = document.querySelectorAll("a[data-is-added='true']");
+
+		elements.forEach((element) => {
+			element.removeAttribute('data-is-added');
+			const event = new Event('dblclick', { bubbles: true });
+			element.dispatchEvent(event);
+		});
+		console.log('Cleared', elements.length, 'items');
+		return;
+	}
+	const [select, numberInput] = e.target;
+	const itemName = select.value;
 
 	if (!map.has(itemName)) {
 		throw new Error('Invalid item selected');
@@ -90,14 +102,19 @@ function onSubmitItemsToTrade(e, map) {
 	const selectedOption = opts.find((option) => option.value === itemName);
 
 	const elements =
-		button.value === 'remove'
-			? mapElements.filter(isAdded)
-			: mapElements.filter((a) => isAdded(a) === false);
+		action === 'remove' ? mapElements.filter(isAdded) : mapElements.filter((a) => isAdded(a) === false);
 
 	const amount = calculateAmount(elements, numberInput.value);
+	const date = new Date(Date.now()).toLocaleTimeString(navigator.language, {
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+	});
+
+	console.log(`[${date}] ${action} %c${itemName} %cx${amount}`, 'color: wheat', 'color: white');
 
 	e.target.action = '';
-	switch (button.value) {
+	switch (action) {
 		case 'add': {
 			for (let i = 0; i < amount; i++) {
 				const element = elements[i];
@@ -236,6 +253,12 @@ browser.runtime.onMessage.addListener((request, sender) => {
 		removeButton.type = 'submit';
 		removeButton.value = 'remove';
 		removeButton.textContent = 'Remove items';
+		const clearButton = document.createElement('button');
+		clearButton.style.minWidth = '75px';
+		clearButton.style.minHeight = '45px';
+		clearButton.type = 'submit';
+		clearButton.value = 'clear';
+		clearButton.textContent = 'Clear all items';
 
 		form.onsubmit = (e) => onSubmitItemsToTrade(e, map);
 		select.onchange = (e) => onSelectItemsToTrade(e, map, numberofItemsInput);
@@ -243,12 +266,7 @@ browser.runtime.onMessage.addListener((request, sender) => {
 
 		form.appendChild(addButton);
 		form.appendChild(removeButton);
+		form.appendChild(clearButton);
 		console.log('Received shared data');
 	}
 });
-
-// function init() {
-// 	console.log('init index.js');
-// }
-
-// init();
