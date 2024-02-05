@@ -7,6 +7,24 @@ const isAdded = (element) => element.hasAttribute('data-is-added');
 /**
  *
  * @param {HTMLAnchorElement[]} elements
+ * @param {(a: HTMLAnchorElement) => void} callback - this runs before the element is clicked
+ * @param {(a: HTMLAnchorElement) => boolean} ignoreFn - determines if should skip element in loop
+ * @param {number} delay - delay in ms
+ * @param {number} max - max iterations
+ */
+function clickElementsWithDelay(elements, callback, ignoreFn, delay, max) {
+	for (let i = 0; i < max; i++) {
+		const element = elements[i];
+		if (ignoreFn(element)) continue;
+
+		callback(element);
+		const event = new Event('dblclick', { bubbles: true });
+		setTimeout(() => element.dispatchEvent(event), i * delay);
+	}
+}
+/**
+ *
+ * @param {HTMLAnchorElement[]} elements
  * @param {string} value
  * @returns {number}
  */
@@ -72,19 +90,26 @@ function generateItemElementMap(response) {
  */
 function onSubmitItemsToTrade(e, map) {
 	e.preventDefault();
-	const button = e.submitter;
-	const action = button.value;
+	const action = e.submitter?.value;
+	if (!action) {
+		throw new Error('Invalid form action');
+	}
+	const delay = Number(e.target.elements['click-delay'].value);
 
+	console.log({ delay });
 	// Exit early if clearing, since we don't need any other variables for this action.
 	if (action === 'clear') {
-		const elements = document.querySelectorAll("a[data-is-added='true']");
+		const elementsToClear = document.querySelectorAll("a[data-is-added='true']");
 
-		elements.forEach((element) => {
-			element.removeAttribute('data-is-added');
-			const event = new Event('dblclick', { bubbles: true });
-			element.dispatchEvent(event);
-		});
-		console.log('Cleared', elements.length, 'items');
+		clickElementsWithDelay(
+			elementsToClear,
+			(element) => element.removeAttribute('data-is-added'),
+			() => {},
+			delay,
+			elementsToClear.length,
+		);
+
+		console.log('Cleared', elementsToClear.length, 'items');
 		return;
 	}
 	const [select, numberInput] = e.target;
@@ -116,29 +141,28 @@ function onSubmitItemsToTrade(e, map) {
 	e.target.action = '';
 	switch (action) {
 		case 'add': {
-			for (let i = 0; i < amount; i++) {
-				const element = elements[i];
-				if (isAdded(element)) continue;
+			clickElementsWithDelay(
+				elements,
+				(e) => e.setAttribute('data-is-added', true),
+				isAdded,
+				delay,
+				amount,
+			);
 
-				element.setAttribute('data-is-added', true);
-				const event = new Event('dblclick', { bubbles: true });
-				element.dispatchEvent(event);
-			}
 			break;
 		}
 		case 'remove': {
-			for (let i = 0; i < amount; i++) {
-				const element = elements[i];
-				if (isAdded(element) === false) continue;
-
-				element.removeAttribute('data-is-added');
-				const event = new Event('dblclick', { bubbles: true });
-				element.dispatchEvent(event);
-			}
+			clickElementsWithDelay(
+				elements,
+				(e) => e.removeAttribute('data-is-added'),
+				(e) => isAdded(e) === false,
+				delay,
+				amount,
+			);
 			break;
 		}
 		default:
-			throw new Error(`Unhandled button type ${button.type}`);
+			throw new Error(`Unhandled action ${action}`);
 	}
 
 	// filteredElements.length should be <= amount due to html form validation
@@ -217,7 +241,7 @@ browser.runtime.onMessage.addListener((request, sender) => {
 		select.style.background = 'darkgreen';
 		select.style.color = 'white';
 		select.name = 'items';
-		select.style.minHeight = '45px';
+		select.style.minHeight = '35px';
 
 		const itemNames = [...map.keys()];
 		// options
@@ -238,30 +262,44 @@ browser.runtime.onMessage.addListener((request, sender) => {
 		// number of items input
 		const numberofItemsInput = document.createElement('input');
 		numberofItemsInput.type = 'number';
-		numberofItemsInput.style.minHeight = '45px';
+		numberofItemsInput.style.minHeight = '35px';
 		numberofItemsInput.placeholder = `${map.get(select.value).length} or leave empty for all of them`;
 		numberofItemsInput.name = 'item-quantity';
 		numberofItemsInput.max = map.get(select.value).length;
-
 		form.appendChild(numberofItemsInput);
+
+		// click delay input
+		const delayInput = document.createElement('input');
+		delayInput.type = 'number';
+		delayInput.style.minHeight = '35px';
+		delayInput.style.minWidth = '45px';
+		delayInput.style.maxWidth = '65px';
+		delayInput.placeholder = '100';
+		delayInput.defaultValue = 100;
+		delayInput.name = 'click-delay';
+		delayInput.min = 80;
+		delayInput.max = 2000;
+
+		form.appendChild(delayInput);
 
 		// submit button
 		const addButton = document.createElement('button');
 		addButton.style.minWidth = '75px';
-		addButton.style.minHeight = '45px';
+		addButton.style.minHeight = '35px';
 		addButton.type = 'submit';
 		addButton.value = 'add';
 		addButton.textContent = 'Add items';
 
 		const removeButton = document.createElement('button');
 		removeButton.style.minWidth = '75px';
-		removeButton.style.minHeight = '45px';
+		removeButton.style.minHeight = '35px';
 		removeButton.type = 'submit';
 		removeButton.value = 'remove';
 		removeButton.textContent = 'Remove items';
+
 		const clearButton = document.createElement('button');
 		clearButton.style.minWidth = '75px';
-		clearButton.style.minHeight = '45px';
+		clearButton.style.minHeight = '35px';
 		clearButton.type = 'submit';
 		clearButton.value = 'clear';
 		clearButton.textContent = 'Clear all items';
